@@ -1,9 +1,10 @@
 /*
  * HTML5 Caching
- * <https://github.com/jjNford/html5-caching>
+ * <https://github.com/Dhar/html5-caching>
  * 
  * Copyright (C) 2012, JJ Ford (jj.n.ford@gmail.com)
- * 
+ * Copyright (C) 2012, Gary Arnold (garnold@garyarnold.com)
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
@@ -87,7 +88,7 @@
 		/**
 		 * @param id The ID of the cache block to load from.
 		 * @param key The address in the block to load data from.
-		 * @return If smart caching is turned on, cached data object {expired: <>, data: <>}, null 
+		 * @return If smart caching is turned on, cached data object {expired: <>, data: <>, ttl: <>}, null
 		 *         if no data found. If smart caching is turned off and cache has expired null is 
 		 *         returned.
 		 */
@@ -99,13 +100,13 @@
 					var expired = false;
 					
 					if(payload != null) {
-						if(timestamp - payload.time > this.TTL) {
+						if(timestamp - payload.time > payload.ttl) {
 							if(this.isSmart() === false) {
 								return null;
 							}
 							expired = true;
 						}
-						return {data: payload.data, expired: expired};
+						return {data: payload.data, expired: expired, ttl: payload.ttl - (timestamp - payload.time)};
 					}
 					return null;
 				}
@@ -122,13 +123,16 @@
 		 * @param The data to cache.
 		 * @return True if the data is cached, false if not.
 		 */
-		save: function(id, address, data, _missed) {
+		save: function(id, address, data, ttl, _missed) {
 			if(this.isEnabled() === true) {
 				try {
+                    if(!ttl) {
+                        ttl = this.TTL;
+                    }
 					if(!_missed || _missed <= this.THRESHOLD) {						
 						var block = JSON.parse(window['localStorage'][this.KEY + id]);
 						var timestamp = new Date().getTime();
-						block[address] = {"time": timestamp, "data": data};
+						block[address] = {"time": timestamp, "data": data, "ttl": ttl};
 						window['localStorage'][this.KEY + id] = JSON.stringify(block);
 						return true;
 					}
