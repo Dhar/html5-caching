@@ -85,16 +85,15 @@
 		},
 		
 		/**
-		 * @param block The ID of the cache block to load from.
 		 * @param key The address in the block to load data from.
 		 * @return If smart caching is turned on, cached data object {expired: <>, data: <>, ttl: <>}, null
 		 *         if no data found. If smart caching is turned off and cache has expired null is 
 		 *         returned.
 		 */
-		load: function(block, key) {
+		load: function(key) {
 			if(this.isEnabled() === true) {
 				try {
-					var payload = JSON.parse(window['localStorage'][this.KEY + block])[key];
+					var payload = JSON.parse(window['localStorage'][this.KEY + key]);
 					var timestamp = new Date().getTime();
 					var expired = false;
 					
@@ -117,23 +116,21 @@
 		},
 		
 		/**
-		 * @param block The ID of the cache block to save data to.
 		 * @param key The address in the block to save data to.
 		 * @param data The data to cache.
          * @param ttl TTL of this cache item, in milliseconds.  Optional.
 		 * @return True if the data is cached, false if not.
 		 */
-		save: function(block, key, data, ttl, _missed) {
+		save: function(key, data, ttl, _missed) {
 			if(this.isEnabled() === true) {
 				try {
                     if(!ttl) {
                         ttl = this.TTL;
                     }
-					if(!_missed || _missed <= this.THRESHOLD) {						
-						var block = JSON.parse(window['localStorage'][this.KEY + block]);
+					if(!_missed || _missed <= this.THRESHOLD) {
 						var timestamp = new Date().getTime();
-						block[key] = {"time": timestamp, "data": data, "ttl": ttl};
-						window['localStorage'][this.KEY + block] = JSON.stringify(block);
+						var block = {"time": timestamp, "data": data, "ttl": ttl};
+						window['localStorage'][this.KEY + key] = JSON.stringify(block);
 						return true;
 					}
 					else {
@@ -144,8 +141,8 @@
 					if(!_missed) {
 						_missed = 0;
 					}
-					window['localStorage'][this.KEY + block] = "{}";
-					return this.save(block, key, data, ++_missed);
+					window['localStorage'][this.KEY + key] = "{}";
+					return this.save(key, data, ++_missed);
 				}
 			}
 			return false;
