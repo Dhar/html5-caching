@@ -34,7 +34,6 @@
 			this.ENABLED = "pref.cen";
 			this.SMART = "pref.csm";
 			this.THRESHOLD = 1;
-			this.NAME = "Cache";
 		},
 		
 		/**
@@ -86,16 +85,16 @@
 		},
 		
 		/**
-		 * @param id The ID of the cache block to load from.
+		 * @param block The ID of the cache block to load from.
 		 * @param key The address in the block to load data from.
 		 * @return If smart caching is turned on, cached data object {expired: <>, data: <>, ttl: <>}, null
 		 *         if no data found. If smart caching is turned off and cache has expired null is 
 		 *         returned.
 		 */
-		load: function(id, address) {
+		load: function(block, key) {
 			if(this.isEnabled() === true) {
 				try {
-					var payload = JSON.parse(window['localStorage'][this.KEY + id])[address];
+					var payload = JSON.parse(window['localStorage'][this.KEY + block])[key];
 					var timestamp = new Date().getTime();
 					var expired = false;
 					
@@ -118,22 +117,23 @@
 		},
 		
 		/**
-		 * @param id The ID of the cache block to save data to.
+		 * @param block The ID of the cache block to save data to.
 		 * @param key The address in the block to save data to.
-		 * @param The data to cache.
+		 * @param data The data to cache.
+         * @param ttl TTL of this cache item, in milliseconds.  Optional.
 		 * @return True if the data is cached, false if not.
 		 */
-		save: function(id, address, data, ttl, _missed) {
+		save: function(block, key, data, ttl, _missed) {
 			if(this.isEnabled() === true) {
 				try {
                     if(!ttl) {
                         ttl = this.TTL;
                     }
 					if(!_missed || _missed <= this.THRESHOLD) {						
-						var block = JSON.parse(window['localStorage'][this.KEY + id]);
+						var block = JSON.parse(window['localStorage'][this.KEY + block]);
 						var timestamp = new Date().getTime();
-						block[address] = {"time": timestamp, "data": data, "ttl": ttl};
-						window['localStorage'][this.KEY + id] = JSON.stringify(block);
+						block[key] = {"time": timestamp, "data": data, "ttl": ttl};
+						window['localStorage'][this.KEY + block] = JSON.stringify(block);
 						return true;
 					}
 					else {
@@ -144,8 +144,8 @@
 					if(!_missed) {
 						_missed = 0;
 					}
-					window['localStorage'][this.KEY + id] = "{}";
-					return this.save(id, address, data, ++_missed);
+					window['localStorage'][this.KEY + block] = "{}";
+					return this.save(block, key, data, ++_missed);
 				}
 			}
 			return false;
